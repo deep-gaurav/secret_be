@@ -1,13 +1,13 @@
 -- Add migration script here
 
 CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
+  id TEXT NOT NULL PRIMARY KEY ,
   name TEXT NOT NULL,
   notification_token TEXT
 );
 
 CREATE TABLE IF NOT EXISTS secret (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY NOT NULL,
   creator_id TEXT NOT NULL,
   limit_number INT,
   title TEXT NOT NULL,
@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS secret (
 );
 
 CREATE TABLE IF NOT EXISTS message (
-  id TEXT PRIMARY KEY,
+  id TEXT PRIMARY KEY NOT NULL,
   creator_id TEXT NOT NULL,
   secret_id TEXT NOT NULL,
   message TEXT NOT NULL,
