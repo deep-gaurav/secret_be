@@ -25,6 +25,29 @@ pub async fn create_user(id: &str, name: &str, pool: &SqlitePool) -> anyhow::Res
     Ok(result)
 }
 
+pub async fn set_notification_token_for_user(
+    user_id: &str,
+    token: &str,
+    pool: &SqlitePool,
+) -> anyhow::Result<()> {
+    let _result = sqlx::query!(
+        "
+        UPDATE users
+        SET notification_token = $1
+        WHERE id = $2
+    ",
+        token,
+        user_id
+    )
+    .execute(pool)
+    .await?;
+    if _result.rows_affected() > 0 {
+        Ok(())
+    } else {
+        Err(anyhow::anyhow!("No Rows affected"))
+    }
+}
+
 pub async fn create_secret(
     creator_id: &str,
     title: &str,

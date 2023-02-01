@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use async_graphql::{
     http::{playground_source, GraphQLPlaygroundConfig},
     EmptySubscription, Schema,
@@ -19,6 +21,7 @@ use schema::{
     graph_schema::{Mutation, Query},
     sql_functions::{get_secret, get_user},
 };
+use serde::{Deserialize, Serialize};
 use sqlx::{Executor, SqlitePool};
 use tower::ServiceExt;
 use tower_http::{
@@ -31,12 +34,33 @@ pub mod schema;
 
 lazy_static::lazy_static! {
     static ref FRONTEND_DIR: String = std::env::var("FRONTEND_DIR").unwrap_or(".".into());
+    pub static  ref FIREBASE_VALUES:FirebaseValues = {
+        let service_json_file = std::env::var("SERVICE_JSON").expect("No SERVICE_JSON defined");
+        let data = std::fs::read_to_string(&service_json_file).unwrap();
+        let data = serde_json::from_str(&data).unwrap();
+        data
+    };
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct FirebaseValues {
+    pub project_id: String,
+    pub private_key_id: String,
+    pub private_key: String,
+    pub client_email: String,
+    pub client_id: String,
+    pub auth_uri: String,
+    pub token_uri: String,
+    pub auth_provider_x509_cert_url: String,
+    pub client_x509_cert_url: String,
 }
 
 #[tokio::main]
 async fn main() -> Result<(), ()> {
     dotenvy::dotenv().ok().expect("No env");
     pretty_env_logger::init();
+
+    let _firebase_client = FIREBASE_VALUES.client_id.clone();
 
     let pool = SqlitePool::connect(
         &std::env::var("DATABASE_URL").expect("NO DATABASE_URL in environment"),
@@ -136,6 +160,7 @@ async fn files_handler(req: Request<Body>) -> Response {
 
 async fn graphql_handler(
     Extension(schema): Extension<Schema<Query, Mutation, EmptySubscription>>,
+
     token: Option<AuthBearer>,
     State(pool): State<SqlitePool>,
     headers: HeaderMap,

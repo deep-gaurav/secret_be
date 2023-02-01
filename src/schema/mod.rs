@@ -1,3 +1,5 @@
+use std::sync::{Arc, RwLock};
+
 use async_graphql::Context;
 use magic_crypt::{new_magic_crypt, MagicCrypt, MagicCrypt128, MagicCryptTrait};
 use sqlx::SqlitePool;
@@ -43,4 +45,14 @@ pub async fn get_user_id_from_context<'ctx>(
             Ok(new_id)
         }
     }
+}
+
+lazy_static::lazy_static! {
+    static ref BEARER_HOLDER:Arc<RwLock<Option<String>>> = Arc::new(RwLock::new(None));
+}
+
+pub async fn get_token_ref_from_context<'ctx>(
+    context: &Context<'ctx>,
+) -> Result<Arc<RwLock<Option<String>>>, anyhow::Error> {
+    Ok(BEARER_HOLDER.clone())
 }
