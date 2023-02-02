@@ -8,7 +8,7 @@ use async_graphql_axum::{GraphQLRequest, GraphQLResponse};
 use axum::{
     body::Body,
     extract::{Path, State},
-    http::{header, HeaderMap, Method, Request, StatusCode},
+    http::{header, HeaderMap, Method, Request, StatusCode, Uri},
     response::{Html, IntoResponse, Response},
     routing::{get, post},
     Extension, Router, Server,
@@ -142,14 +142,26 @@ async fn secret_meta(
     return files_handler(req).await;
 }
 
-async fn files_handler(req: Request<Body>) -> Response {
+async fn files_handler(mut req: Request<Body>) -> Response {
+    let mut path = req.uri().path().to_string();
+    if path.starts_with("/") {
+        path = path.replacen("/", "", 1);
+    }
+    let file_path = std::path::Path::new(FRONTEND_DIR.as_str()).join(&path);
+    log::debug!("Check path {file_path:#?}");
+    let mut new_path = path.to_string();
+    if !file_path.exists() {
+        new_path = "index.html".to_string();
+    }
+    let uri = req.uri();
+    *req.uri_mut() = Uri::builder().path_and_query(new_path).build().unwrap();
     let serve_dir = ServeDir::new(FRONTEND_DIR.as_str());
     let serve_dir = serve_dir.not_found_service(ServeFile::new(format!(
         "{}/index.html",
         FRONTEND_DIR.as_str()
     )));
     match serve_dir.oneshot(req).await {
-        Ok(res) => (StatusCode::OK, res).into_response(),
+        Ok(res) => res.into_response(),
         Err(err) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             format!("Something went wrong: {}", err),
