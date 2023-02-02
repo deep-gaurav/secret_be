@@ -23,6 +23,9 @@ jobs:
       run: sudo apt update && sudo apt install -y clang cmake libevent-dev libclang-dev libcurl4-openssl-dev curl
     - run: rustup toolchain install stable --profile minimal
     - uses: Swatinem/rust-cache@v2
+      with:
+        shared-key: "build-key"
+        key: "secret-be"
     - name: Build
       run: cargo build --release
       env:
