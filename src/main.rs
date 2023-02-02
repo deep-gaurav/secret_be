@@ -150,7 +150,7 @@ async fn files_handler(mut req: Request<Body>) -> Response {
     let file_path = std::path::Path::new(FRONTEND_DIR.as_str()).join(&path);
     log::debug!("Check path {file_path:#?}");
     let mut new_path = path.to_string();
-    if !file_path.exists() {
+    if !(file_path.exists() && file_path.is_file()) {
         new_path = "index.html".to_string();
     }
     let uri = req.uri();
